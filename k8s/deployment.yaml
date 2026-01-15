@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bangla-guard-deployment
+  labels:
+    app: bangla-guard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bangla-guard
+  template:
+    metadata:
+      labels:
+        app: bangla-guard
+    spec:
+      containers:
+      - name: bangla-guard
+        image: bangla-guard:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
