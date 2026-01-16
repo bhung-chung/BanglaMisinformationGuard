@@ -11,8 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ src/
 COPY app/ app/
 COPY models/ models/
-# Copy raw data for /similar endpoint (Authentic news database)
-COPY data/raw/Authentic-48K.csv data/raw/Authentic-48K.csv
+
 
 # Expose port
 EXPOSE 8000
