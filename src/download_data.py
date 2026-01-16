@@ -1,57 +1,112 @@
 import os
-import urllib.request
+import sys
+import subprocess
 import zipfile
-import shutil
-import io
+from pathlib import Path
 
-RAW_DATA_DIR = os.path.join("data", "raw")
-REPO_ZIP_URLS = [
-    "https://github.com/Rowan1224/FakeNews/archive/refs/heads/master.zip",
-    "https://github.com/Rowan1224/FakeNews/archive/refs/heads/main.zip"
-]
-HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+# Kaggle dataset
+DATASET_SLUG = "cryptexcode/banfakenews"
 
-def download_and_extract():
-    if not os.path.exists(RAW_DATA_DIR):
-        os.makedirs(RAW_DATA_DIR)
-    
-    success = False
-    for url in REPO_ZIP_URLS:
-        print(f"Trying to download ZIP from {url}...")
-        try:
-            req = urllib.request.Request(url, headers=HEADERS)
-            with urllib.request.urlopen(req) as response:
-                zip_content = response.read()
-                
-            with zipfile.ZipFile(io.BytesIO(zip_content)) as zip_ref:
-                # List files to find where the CSVs are
-                print("Files in ZIP:")
-                for file in zip_ref.namelist():
-                    # Check if it looks like our data
-                    if file.endswith('.csv') and 'Authentic' in file:
-                        print(f"  Found: {file}")
-                        # Extract flat to RAW_DATA_DIR
-                        filename = os.path.basename(file)
-                        target_path = os.path.join(RAW_DATA_DIR, filename)
-                        with zip_ref.open(file) as source, open(target_path, 'wb') as target:
-                            shutil.copyfileobj(source, target)
-                        print(f"  Extracted to {target_path}")
-                        success = True
-                    elif file.endswith('.csv') and 'Fake' in file:
-                         filename = os.path.basename(file)
-                         target_path = os.path.join(RAW_DATA_DIR, filename)
-                         with zip_ref.open(file) as source, open(target_path, 'wb') as target:
-                            shutil.copyfileobj(source, target)
-                         print(f"  Extracted to {target_path}")
-            
-            if success:
-                print("Successfully extracted data.")
+# Target directory
+RAW_DATA_DIR = Path("data") / "raw"
+
+# Expected final filenames (used by project)
+EXPECTED_FILES = {
+    "Authentic-48.csv": ["authentic-48", "authentic"],
+    "Fake-1K.csv": ["fake-1k", "fake"],
+    "LabeledAuthentic-7K.csv": ["labeledauthentic", "labeled_authentic"],
+    "LabeledFake-1K.csv": ["labeledfake", "labeled_fake"],
+}
+
+
+def check_kaggle_cli():
+    """Ensure Kaggle CLI is installed and accessible."""
+    try:
+        subprocess.run(
+            ["kaggle", "--version"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        print("ERROR: Kaggle CLI not found.")
+        print("Install it with: pip install kaggle")
+        print("Then create API token at: https://www.kaggle.com/account")
+        sys.exit(1)
+
+
+def download_dataset():
+    RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    print(f"Downloading Kaggle dataset: {DATASET_SLUG}")
+    subprocess.run(
+        [
+            "kaggle",
+            "datasets",
+            "download",
+            "-d",
+            DATASET_SLUG,
+            "-p",
+            str(RAW_DATA_DIR),
+            "--force",
+        ],
+        check=True,
+    )
+
+    zip_files = list(RAW_DATA_DIR.glob("*.zip"))
+    if not zip_files:
+        print("ERROR: No ZIP file downloaded.")
+        sys.exit(1)
+
+    return zip_files[0]
+
+
+def extract_dataset(zip_path: Path):
+    print(f"Extracting {zip_path.name}...")
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        zf.extractall(RAW_DATA_DIR)
+    zip_path.unlink()  # remove zip after extraction
+
+
+def normalize_filenames():
+    csv_files = list(RAW_DATA_DIR.rglob("*.csv"))
+    if not csv_files:
+        print("ERROR: No CSV files found after extraction.")
+        sys.exit(1)
+
+    for expected, keywords in EXPECTED_FILES.items():
+        matched = False
+        for csv in csv_files:
+            name = csv.name.lower().replace(" ", "").replace("-", "")
+            if any(k in name for k in keywords):
+                target = RAW_DATA_DIR / expected
+                if csv.resolve() != target.resolve():
+                    csv.rename(target)
+                print(f"✔ {expected}")
+                matched = True
                 break
-        except Exception as e:
-            print(f"Failed {url}: {e}")
 
-    if not success:
-        print("Failed to download data from any source.")
+        if not matched:
+            print(f"ERROR: Required file not found for {expected}")
+            sys.exit(1)
+
+
+def verify():
+    print("\nFinal verification:")
+    for fname in EXPECTED_FILES:
+        path = RAW_DATA_DIR / fname
+        if not path.exists():
+            print(f"❌ Missing: {fname}")
+            sys.exit(1)
+        else:
+            print(f"✅ {fname}")
+
+    print("\nDataset is ready.")
+
 
 if __name__ == "__main__":
-    download_and_extract()
+    check_kaggle_cli()
+    zip_path = download_dataset()
+    extract_dataset(zip_path)
+    normalize_filenames()
+    verify()
