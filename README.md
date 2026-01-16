@@ -199,7 +199,8 @@ curl -X POST http://localhost:8000/predict \
 
 **Evidence:**
 
-[!!Paste picture here!!]
+<img width="1471" height="322" alt="image" src="https://github.com/user-attachments/assets/3e4a2cdd-ca6c-47f8-bb0e-ac8897694d33" />
+
 
 ---
 
@@ -238,9 +239,10 @@ Invoke-RestMethod -Uri "http://localhost:8000/predict" -Method Post -ContentType
 
 **Evidence:**
 
-[!!Paste picture here!!]
+<img width="1702" height="375" alt="image" src="https://github.com/user-attachments/assets/e536f0c7-41f4-4d94-a422-91d9baf7f5e1" />
 
-[!!Paste picture here!!]
+<img width="1471" height="322" alt="image" src="https://github.com/user-attachments/assets/dc3c02be-bcab-4b34-ac74-fb88e6baa577" />
+
 
 ---
 
