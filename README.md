@@ -2,7 +2,8 @@
   <b>Personal Portfolio:</b>
   <a href="https://github.com/bhung-chung/Bangla-Fake-News-Detection">Bangla Fake News Detection</a> |
   <a href="https://github.com/bhung-chung/Drone-Object-Detection">Drone Object Detection</a> |
-  <a href="https://github.com/bhung-chung/Heart-Disease-Prediction">Heart Disease Prediction</a>
+  <a href="https://github.com/bhung-chung/Heart-Disease-Prediction">Heart Disease Prediction</a> |
+  <a href="https://github.com/bhung-chung/Wooden-Planetary-Gear">Planetary Gear System</a>
 </div><br>
 # BanglaMisinformationGuard
 
